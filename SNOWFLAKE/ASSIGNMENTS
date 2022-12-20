@@ -1,1 +1,77 @@
+1> CREATING A TABLE WITH A PRIMARY KEY--
 
+create table sales_data_final
+ (order_id varchar(50) primary key,	
+ order_date date,
+ ship_date date,	
+ ship_mode varchar(50),
+ customer_name varchar(50),
+ segment varchar(50),
+ state varchar(50),
+ country varchar(50),
+ market varchar(50),
+ region varchar(50),
+ product_id varchar(50),
+ category varchar(50),
+ sub_category varchar(50),
+ product_name varchar(200),
+ sales int,	
+ quantity int,
+ discount number(10,5),
+ profit number(10,5),
+ shipping_cost number(10,5),	
+ order_priority varchar(50),
+ year int);
+
+2> CHANGE THE PRIMARY KEY TO ORDER ID COLOUMN
+
+ALTER TABLE sales_data_final
+DROP PRIMARY KEY;
+
+alter table sales_data_final
+add primary key(ORDER_ID);
+
+3> CHECK THE DATA TYPE OF ORDER_DATE AND SHIP_DATE COLOUMN, AND MENTION IN WHICH DATA TYPE SHOULD WE MENTION
+
+so before uploading the csv file in snowflake we have to first convert the oeder_date and ship_date coloumn to date type and arrange the date type in format of 
+YYYY-MM-DD, because snowflake only support this dte type format
+
+4> CREATE A NEW COLOUMN CALLED ORDER_EXTRACT AND EXTRACT THE NUMBER AFTER THE LAST '-' FROM THE ORDER_ID COLOUMN
+
+alter table sales_data_final
+add column ORDER_EXTRACT int;
+
+update sales_data_final
+set ORDER_EXTRACT = SUBSTRING(ORDER_ID,9,10);
+
+5> CREATE A NEW COLOUMN CALLED DISCOUNT_FLAG AND CATEGORIZE IT BASED ON DISCOUNT. USE 'YES' IF THE DISCOUNT IS GREATER THAN ZERO ELSE 'NO'
+
+select *,
+             case
+                      when discount > 0 then 'yes'
+                      else 'NO'
+                      end as discount_flag
+from sales_data_final;
+
+6> CREATE A NEW COLOUMN CALLED PROCESS_DAYS AND CALCULATE HOW MANY DAYS IT TAKES FOR EACH ORDER_ID TO PROCESS FROM THE ORDER TO ITS SHIPMENTS
+
+alter table sales_data_final
+add column PROCESS_DAY int;
+
+update sales_data_final
+set PROCESS_DAY = (datediff('day',ORDER_DATE,SHIP_DATE));
+
+7> CREATE A NEW COLOMN CALLED RATING AND THEN BASED ON THE PROCESS DATES GIVE, RATING LIKE GIVEN BELOW
+A> IF THE PROCESS DAYS LESS THAN OR EQUAL TO 3 DAYS THEN RATING SHOULD BE 5
+B> IF THE PROCESS DAYS GREATER THAN 3 AND LESS THAN EQUAL TO 6 THEN RATING SHOULD BE 4
+C> IF THE PROCESS DAYS GREATER THAN 6 AND LESS THAN EQUAL TO 10 THEN RATING SHOULD BE 3
+D> IF THE PROCESS DAYS GREATER THAN 10 THEN RATING SHOULD BE 2
+
+select *, 
+            case
+                    when PROCESS_DAY <= 3 then 'RATING IS 5'
+                    when PROCESS_DAY <= 6 then 'RATING IS 4'
+                    when PROCESS_DAY <= 10 then 'RATING IS 3'
+                    when PROCESS_DAY > 10 then 'RATING IS 2'
+                    end as RATING_ON_PROCESS_DAY
+from sales_data_final;
